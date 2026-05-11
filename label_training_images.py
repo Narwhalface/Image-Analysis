@@ -1,3 +1,11 @@
+"""Interactive labeler for extracted training crops.
+
+The key design choice here is that labeling is performed on the saved preview
+image when available, but the label is applied to the crop file that will be
+used during training. This keeps human labeling practical without changing the
+model's training representation.
+"""
+
 import shutil
 import sys
 from pathlib import Path
@@ -102,6 +110,8 @@ def prompt_for_label(image_path: Path, label_names: list[str], prompt: str) -> s
 
 
 def move_image_to_label(data_dir: Path, image_path: Path, label_name: str, label_names: list[str]) -> None:
+    # Files are moved into class folders because the training script treats each
+    # immediate subfolder as a semantic class.
     if label_name not in label_names:
         label_names.append(label_name)
         print(f"Added label {len(label_names)}: {label_name}")
@@ -156,6 +166,8 @@ def main(
         if preview_path.exists():
             preview_image = cv2.imread(str(preview_path), cv2.IMREAD_UNCHANGED)
 
+        # The preview is easier for humans to interpret, but the crop remains the
+        # actual training sample stored in the class folder.
         display_source = preview_image if preview_image is not None else image
         display_image = prepare_display_image(display_source)
         display_image = draw_overlay(display_image, image_path, index, len(images), label_names, preview_image is not None)

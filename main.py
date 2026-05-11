@@ -1,3 +1,13 @@
+"""Main coursework pipeline.
+
+This script has two jobs that matter for the report:
+1. detect the foreground object from the Kinect depth stream
+2. save a training representation that matches the representation used at test time
+
+The saved sample is a multimodal crop built from colour, depth, and IR so the
+classifier can learn from all three cues instead of depth alone.
+"""
+
 import json
 import os
 import shutil
@@ -65,6 +75,8 @@ def predict_object_class(
     class_names: list[str],
     nfeatures: int,
 ) -> str:
+    # Live prediction must use the same multimodal feature vector as training,
+    # otherwise the classifier sees a different data distribution at runtime.
     feature_vector = extract_multimodal_features(crop, orb, nfeatures=nfeatures)
     _, prediction = svm.predict(feature_vector.reshape(1, -1).astype(np.float32))
     class_index = int(prediction.flatten()[0])
@@ -262,6 +274,8 @@ def should_save_frame(
     min_save_gap: int,
     min_crop_change: float,
 ) -> bool:
+    # This simple redundancy filter stops near-identical video frames from
+    # dominating the dataset and inflating the number of almost-duplicate crops.
     if last_saved_frame is not None and frame_count - last_saved_frame < min_save_gap:
         return False
 
@@ -322,6 +336,8 @@ def crop_modality_image(
     h: int,
     reference_shape: tuple[int, int],
 ) -> np.ndarray | None:
+    # Colour and IR frames may not have exactly the same resolution as the depth
+    # image, so the depth bounding box is mapped into each modality separately.
     if image is None:
         return None
 
@@ -342,6 +358,8 @@ def build_multimodal_crop(
     depth_crop: np.ndarray,
     ir_crop: np.ndarray | None,
 ) -> np.ndarray:
+    # The training image is a three-panel crop so one saved PNG still contains
+    # the aligned colour, depth, and IR evidence for the same detected object.
     panel_height, panel_width = depth_crop.shape[:2]
 
     def prepare_crop_panel(image: np.ndarray | None) -> np.ndarray:
@@ -598,6 +616,9 @@ def app_main(
                     if num_labels <= 1:
                         continue
 
+                    # The largest connected component is treated as the object.
+                    # This makes the box more stable than using every foreground
+                    # pixel, which can be pulled around by small noisy blobs.
                     component_areas = stats[1:, cv2.CC_STAT_AREA]
                     largest_label = int(np.argmax(component_areas)) + 1
                     largest_component = labels == largest_label
@@ -727,6 +748,8 @@ def app_main(
 
                 if save_every_detection and last_detected_crop is not None:
                     saved_crop = last_detected_crop.copy()
+                    # A separate preview image is kept for the labeler so humans
+                    # can see scene context while the model still trains on crops.
                     saved_preview = build_saved_screenshot(
                         last_colour_frame,
                         last_display_frame,

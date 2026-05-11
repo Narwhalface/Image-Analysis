@@ -11,3 +11,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+!/__pycache__/
+!/__pycache__/*.pyc
+!/vi2026_pythonpackage/__pycache__/
+!/vi2026_pythonpackage/__pycache__/*.pyc
