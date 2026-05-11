@@ -1,0 +1,5 @@
+azure-kinect-video-player @ https://github.com/JonBoyleCoding/python-azure-kinect-video-player/archive/refs/tags/v0.2.6.tar.gz
+imageio-ffmpeg>=0.6,<1.0
+numpy>=2.2,<3.0
+opencv-python>=4.9,<5.0
+typer>=0.12,<1.0

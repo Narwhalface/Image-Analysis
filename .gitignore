@@ -1,0 +1,11 @@
+*
+!*/
+!/*.py
+!/requirements.txt
+!/environment.yml
+!/.gitignore
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
