@@ -4,6 +4,8 @@
 !/requirements.txt
 !/environment.yml
 !/.gitignore
+!/vi2026_pythonpackage
+!/README.md
 
 __pycache__/
 *.pyc
